@@ -8,6 +8,7 @@ using NZWalks.API.Data;
 using NZWalks.API.Models.Domain;
 using NZWalks.API.Models.DTO;
 using NZWalks.API.Repositories;
+using System.Text.Json;
 
 namespace NZWalks.API.Controllers
 {
@@ -18,23 +19,37 @@ namespace NZWalks.API.Controllers
         private readonly NZWalksDbContext dbContext;
         private readonly IRegionRepository regionRepository;
         private readonly IMapper mapper;
+        private readonly ILogger<RegionsController> logger;
 
-        public RegionsController(NZWalksDbContext dbContext, IRegionRepository regionRepository, IMapper mapper)
+        public RegionsController(NZWalksDbContext dbContext, IRegionRepository regionRepository, IMapper mapper, ILogger<RegionsController> logger)
         {
             this.dbContext = dbContext;
             this.regionRepository = regionRepository;
             this.mapper = mapper;
+            this.logger = logger;
         }
 
         [HttpGet]
-        [Authorize(Roles = "Reader")]
+        //[Authorize(Roles = "Reader")]
         public async Task<IActionResult> GetAll()
         {
-            //Get data from database - Domain Models
-            var regionsDomain = await regionRepository.GetAllAsync();
+            try
+            {
+                throw new Exception("This is a custom exception");
 
-            //Return Dtos
-            return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
+                //Get data from database - Domain Models
+                var regionsDomain = await regionRepository.GetAllAsync();
+
+                //Return Dtos
+                logger.LogInformation($"Finished GetAllRegions request with data: {JsonSerializer.Serialize(regionsDomain)}");
+                return Ok(mapper.Map<List<RegionDto>>(regionsDomain));
+            }
+            catch(Exception ex)
+            {
+                logger.LogError(ex, ex.Message);
+                throw;
+            }
+            
         }
 
         //Get single region(by id)
